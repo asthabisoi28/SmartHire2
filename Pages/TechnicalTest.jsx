@@ -162,22 +162,22 @@ int main() {
       if (customized.length > 1) {
         customized[1] = {
           ...customized[1],
-          title: 'Valid Palindrome',
-          description: 'A phrase is a palindrome if, after converting all uppercase letters into lowercase letters and removing all non-alphanumeric characters, it reads the same forward and backward. Alphanumeric characters include letters and numbers. Given a string s, return true if it is a palindrome, or false otherwise.',
-          difficulty: customized[1]?.difficulty || 'medium',
-          sample_input: 'A man, a plan, a canal: Panama',
+          title: 'Simple Palindrome Check',
+          description: 'Return true if the string reads exactly the same forwards and backwards.',
+          difficulty: customized[1]?.difficulty || 'easy',
+          sample_input: 'madam',
           sample_output: 'true',
           test_cases: [
-            { input: 'A man, a plan, a canal: Panama', expected_output: 'true' },
-            { input: 'race a car', expected_output: 'false' },
-            { input: ' ', expected_output: 'true' }
+            { input: 'madam', expected_output: 'true' },
+            { input: 'hello', expected_output: 'false' },
+            { input: 'racecar', expected_output: 'true' }
           ],
         };
       }
       setQuestions(customized);
       
-      if (questionData.length > 0) {
-        const q0 = questionData[0];
+      if (customized.length > 0) {
+        const q0 = customized[0];
         const init = {
           python: getStarterTemplate(q0, 'python'),
           java: getStarterTemplate(q0, 'java'),
@@ -185,9 +185,9 @@ int main() {
         };
         setCodeByLang(init);
         setCode(init[selectedLanguage]);
-        setTimeLeft(q0.time_limit * 60); // Convert to seconds
-        setAnswers(new Array(3).fill(''));
-        setSubmissions(new Array(Math.min(3, questionData.length)).fill(null));
+        setTimeLeft((q0.time_limit || 30) * 60); // Convert to seconds
+        setAnswers(new Array(customized.length).fill(''));
+        setSubmissions(new Array(customized.length).fill(null));
       }
     } catch (error) {
       console.error("Error loading data:", error);

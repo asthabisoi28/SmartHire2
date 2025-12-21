@@ -2742,13 +2742,18 @@
                 },
                 {
                     id: 2,
-                    title: "Valid Palindrome",
-                    description: "A phrase is a palindrome if, after converting all uppercase letters into lowercase letters and removing all non-alphanumeric characters, it reads the same forward and backward. Given a string s, return true if it is a palindrome, or false otherwise.",
-                    difficulty: "Medium",
+                    title: "Simple Palindrome Check",
+                    description: "Return true if the string reads exactly the same forwards and backwards.",
+                    difficulty: "Easy",
                     examples: [
-                        { input: 's = "A man, a plan, a canal: Panama"', output: "true" },
-                        { input: 's = "race a car"', output: "false" },
-                        { input: 's = " "', output: "true" }
+                        { input: 's = "madam"', output: "true" },
+                        { input: 's = "hello"', output: "false" },
+                        { input: 's = "racecar"', output: "true" }
+                    ],
+                    test_cases: [
+                        { input: 'madam', expected_output: 'true' },
+                        { input: 'hello', expected_output: 'false' },
+                        { input: 'racecar', expected_output: 'true' }
                     ]
                 }
             ];
@@ -2933,9 +2938,9 @@ json.dumps(candidate)
                             }
 
                             const tests = [
-                                { s: "A man, a plan, a canal: Panama", expected: true },
-                                { s: "race a car", expected: false },
-                                { s: " ", expected: true }
+                                { s: "madam", expected: true },
+                                { s: "hello", expected: false },
+                                { s: "racecar", expected: true }
                             ];
 
                             const results = [];
