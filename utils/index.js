@@ -287,6 +287,115 @@ export function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+export function extractTestCasesFromQuestion(question) {
+  if (!question || typeof question !== 'object') return [];
+
+  const out = [];
+
+  const pushCase = (input, expected, isHidden = false) => {
+    if (typeof input === 'undefined' || typeof expected === 'undefined') return;
+    out.push({ input, expected_output: expected, is_hidden: !!isHidden });
+  };
+
+  // 1) Standard snake_case: test_cases: [{ input, expected_output, is_hidden? }]
+  if (Array.isArray(question.test_cases)) {
+    for (const tc of question.test_cases) {
+      if (tc && (tc.input !== undefined) && (tc.expected_output !== undefined)) {
+        pushCase(tc.input, tc.expected_output, tc.is_hidden);
+      }
+    }
+  }
+
+  // 2) camelCase: testCases: [{ input, output, expected, isHidden? }]
+  if (Array.isArray(question.testCases)) {
+    for (const tc of question.testCases) {
+      if (!tc) continue;
+      const expected = (tc.expected !== undefined) ? tc.expected : tc.output;
+      if (tc.input !== undefined && expected !== undefined) {
+        pushCase(tc.input, expected, tc.isHidden);
+      }
+    }
+  }
+
+  // 3) Some sources embed sample_input/sample_output only
+  if (out.length === 0 && (question.sample_input !== undefined) && (question.sample_output !== undefined)) {
+    pushCase(question.sample_input, question.sample_output, false);
+  }
+
+  // 4) De-duplicate (stringify for structural equality)
+  const seen = new Set();
+  const deduped = [];
+  for (const tc of out) {
+    const key = JSON.stringify({ i: tc.input, e: tc.expected_output });
+    if (!seen.has(key)) { seen.add(key); deduped.push(tc); }
+  }
+
+  return deduped;
+}
+
+export function extractResumeHeuristicChecksFromText(text) {
+  const checks = [];
+  if (!text || typeof text !== 'string') return checks;
+  const t = text;
+  // Basic contact checks
+  const hasEmail = isValidEmail(t);
+  const hasPhone = isValidPhone(t);
+  checks.push({ id: 'email', name: 'Contains email address', passed: !!hasEmail });
+  checks.push({ id: 'phone', name: 'Contains phone number', passed: !!hasPhone });
+
+  // Section presence checks
+  const sections = [
+    { id: 'section_experience', label: 'Experience section', pattern: /experience|work history|employment/i },
+    { id: 'section_skills', label: 'Skills section', pattern: /skills|technical skills|core competencies/i },
+    { id: 'section_education', label: 'Education section', pattern: /education|bachelor|master|degree|university|college/i },
+    { id: 'section_summary', label: 'Summary/Profile section', pattern: /summary|profile|objective/i },
+  ];
+  for (const s of sections) {
+    checks.push({ id: s.id, name: `Contains ${s.label.toLowerCase()}`, passed: s.pattern.test(t) });
+  }
+
+  // Quantifiable achievements (numbers or %)
+  const hasMetrics = /(\d+\s*(%|percent|k|m|years|months))|\b(increased|reduced|improved|grew)\b/i.test(t);
+  checks.push({ id: 'metrics', name: 'Includes quantifiable achievements', passed: hasMetrics });
+
+  // Tech keywords
+  const techKeywords = ['JavaScript','TypeScript','React','Node','Python','Java','C++','AWS','Docker','Kubernetes','SQL','GraphQL'];
+  const hits = techKeywords.filter(k => new RegExp(`\\b${k.replace(/[.*+?^${}()|[\\]\\\\]/g, r=>"\\$&")}\\b`, 'i').test(t)).length;
+  checks.push({ id: 'tech_stack', name: 'Mentions multiple relevant technologies', passed: hits >= 2, details: { hits } });
+
+  return checks;
+}
+
+export function extractResumeKeywordChecksFromEvaluation(evaluation) {
+  const checks = [];
+  if (!evaluation || typeof evaluation !== 'object') return checks;
+  const found = evaluation.keywords?.found || [];
+  const missing = evaluation.keywords?.missing || [];
+  // Treat found as passed and missing as failed
+  for (const kw of found) {
+    checks.push({ id: `kw_${String(kw).toLowerCase()}`.slice(0,50), name: `Keyword: ${kw}`, passed: true });
+  }
+  for (const kw of missing) {
+    checks.push({ id: `kw_${String(kw).toLowerCase()}`.slice(0,50), name: `Keyword: ${kw}`, passed: false });
+  }
+  return checks;
+}
+
+export function extractResumeTests(input) {
+  // input can be { evaluation?, text? }
+  const all = [];
+  if (input && input.evaluation) all.push(...extractResumeKeywordChecksFromEvaluation(input.evaluation));
+  if (input && input.text) all.push(...extractResumeHeuristicChecksFromText(input.text));
+  // Deduplicate by id+name
+  const seen = new Set();
+  const dedup = [];
+  for (const c of all) {
+    const key = `${c.id}::${c.name}`;
+    if (!seen.has(key)) { seen.add(key); dedup.push(c); }
+  }
+  return dedup;
+}
+
 export default {
   createPageUrl,
   formatDate,
@@ -306,4 +415,8 @@ export default {
   isEmpty,
   safeJsonParse,
   delay,
+  extractTestCasesFromQuestion,
+  extractResumeHeuristicChecksFromText,
+  extractResumeKeywordChecksFromEvaluation,
+  extractResumeTests,
 };

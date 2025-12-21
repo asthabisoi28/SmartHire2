@@ -22,7 +22,7 @@ import {
   Timer,
   CheckCircle
 } from "lucide-react";
-import { createPageUrl } from "@/utils";
+import { createPageUrl, extractTestCasesFromQuestion } from "@/utils";
 
 export default function TechnicalTest() {
   const [user, setUser] = useState(null);
@@ -325,7 +325,7 @@ int main() {
       const submission = submissions[i] || { code: finalAnswers[i] || '', language: selectedLanguage };
       const codeText = submission?.code || '';
 
-      const tests = Array.isArray(q.test_cases) && q.test_cases.length > 0 ? q.test_cases : [];
+      const tests = extractTestCasesFromQuestion(q);
       if (tests.length === 0 || !codeText.trim()) continue;
 
       if (submission.language === 'python') {
@@ -341,15 +341,13 @@ int main() {
           if (!hasSolve) { console.warn('No solve(input_data) in Python code'); }
           for (const t of tests) {
             try {
-              const _in = String(t.input);
-              const pySnippet = `\nimport json, ast\n_in = ${JSON.stringify(String(t.input))}\ntry:\n    __out = solve(_in)\nexcept Exception:\n    try:\n        __out = solve(json.loads(_in))\n    except Exception:\n        try:\n            if '|' in _in:\n                _arr_s, _tgt_s = _in.split('|', 1)\n                try:\n                    _arr = json.loads(_arr_s)\n                except Exception:\n                    _arr = ast.literal_eval(_arr_s)\n                try:\n                    _tgt = int(_tgt_s)\n                except Exception:\n                    try:\n                        _tgt = float(_tgt_s)\n                    except Exception:\n                        _tgt = _tgt_s\n                __out = solve(_arr, _tgt)\n            else:\n                raise Exception('unhandled input format')\n        except Exception as e3:\n            __out = '__ERROR__'\nstr(__out)\n`;
+              const pySnippet = `\nimport json, ast\n_in_str = ${JSON.stringify(String(t.input))}\n# Try to coerce input into Python object\ntry:\n    data = json.loads(_in_str)\nexcept Exception:\n    try:\n        data = ast.literal_eval(_in_str)\n    except Exception:\n        data = _in_str\n# Call candidate's solve\ntry:\n    __out = solve(data)\nexcept Exception as e:\n    __out = str(e)\n__out`;
               const out = await pyodide.runPythonAsync(pySnippet);
               const ok = normalizeOutput(out) === normalizeOutput(t.expected_output);
               results.push(ok);
             } catch (e) {
               results.push(false);
             }
-          }
         } catch (e) {
           console.error('Python execution error:', e);
           continue;

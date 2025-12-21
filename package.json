@@ -15,6 +15,9 @@
     "test:coverage": "vitest --coverage"
   },
   "dependencies": {
+    "pdf-parse": "^1.1.1",
+    "mammoth": "^1.6.0",
+    "dotenv": "^16.4.5", 
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.8.0",

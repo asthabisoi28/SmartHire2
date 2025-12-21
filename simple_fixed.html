@@ -2506,72 +2506,72 @@
                 }
             };
             
-            const analyzeResume = () => {
+            const analyzeResume = async () => {
                 if (!uploadedFile) {
                     addNotification('Please upload a file first!', 'error');
                     return;
                 }
-                
-                setAnalyzing(true);
-                addNotification('Analyzing your resume...', 'info');
-                
-                setTimeout(() => {
-                    const score = Math.floor(Math.random() * 30) + 70;
-                    const atsCompatibility = Math.floor(Math.random() * 25) + 75;
-                    const keywordMatch = Math.floor(Math.random() * 30) + 70;
-                    const formatScore = Math.floor(Math.random() * 20) + 80;
-                    
+                try {
+                    setAnalyzing(true);
+                    addNotification('Analyzing your resume...', 'info');
+
+                    // Call server OpenAI endpoint
+                    const resp = await fetch('/api/evaluate', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            question: 'ATS Resume Analysis',
+                            transcript: `File: ${uploadedFile.name} (type: ${uploadedFile.type})\nThe resume content is referenced. Evaluate for ATS compatibility and return JSON with: score (0-100), strengths (array), improvements (array).`,
+                            rubric: 'Focus on ATS parsing, keyword coverage, measurable achievements, formatting best practices, and clarity. Be concise.'
+                        })
+                    });
+                    const data = await resp.json();
+                    if (!resp.ok || !data.ok) {
+                        throw new Error(data.error || 'Failed to analyze resume');
+                    }
+                    const evaluation = data.evaluation || {};
+                    const score = typeof evaluation.score === 'number' ? evaluation.score : 0;
+                    const strengths = Array.isArray(evaluation.strengths) ? evaluation.strengths : [];
+                    const improvements = Array.isArray(evaluation.improvements) ? evaluation.improvements : [];
+
                     const analysisData = {
-                        score: score,
-                        atsCompatibility: atsCompatibility,
-                        keywordMatch: keywordMatch,
-                        formatScore: formatScore,
-                        strengths: [
-                            'Clear contact information',
-                            'Professional formatting',
-                            'Relevant keywords found',
-                            'Good work experience structure'
-                        ],
-                        improvements: [
-                            'Add more quantifiable achievements',
-                            'Include relevant technical skills',
-                            'Optimize for specific job keywords',
-                            'Consider adding a professional summary'
-                        ]
+                        score,
+                        atsCompatibility: score,
+                        keywordMatch: score,
+                        formatScore: score,
+                        strengths,
+                        improvements
                     };
-                    
                     setAnalysisResult(analysisData);
-                    
+
                     // Store ATS results for current user
                     const currentUser = JSON.parse(localStorage.getItem('interviewai_user') || '{}');
                     if (currentUser.email) {
                         const registeredUsers = JSON.parse(localStorage.getItem('interviewai_registered_users') || '[]');
                         const userRecord = registeredUsers.find(u => u.email === currentUser.email);
-                        
                         if (userRecord) {
-                            // Store ATS results with user ID
                             const atsResults = {
                                 userId: userRecord.id,
                                 completed: true,
-                                score: score,
-                                atsCompatibility: atsCompatibility,
-                                keywordMatch: keywordMatch,
-                                formatScore: formatScore,
+                                score,
+                                atsCompatibility: analysisData.atsCompatibility,
+                                keywordMatch: analysisData.keywordMatch,
+                                formatScore: analysisData.formatScore,
                                 completedAt: new Date().toISOString(),
                                 fileName: uploadedFile.name
                             };
-                            
-                            // Get existing ATS results and update
                             const existingResults = JSON.parse(localStorage.getItem('ats_results') || '{}');
                             existingResults[userRecord.id] = atsResults;
                             localStorage.setItem('ats_results', JSON.stringify(existingResults));
-                            
                             addNotification('ATS analysis complete and saved!', 'success');
                         }
                     }
-                    
+                } catch (e) {
+                    console.error('ATS analysis failed:', e);
+                    addNotification(`ATS analysis failed: ${e.message || e}`, 'error');
+                } finally {
                     setAnalyzing(false);
-                }, 3000);
+                }
             };
             
             return React.createElement('div', { className: 'max-w-4xl mx-auto' },
@@ -2808,7 +2808,7 @@
             
             const startCodingTest = () => {
                 setCurrentSection('coding');
-                setTimeLeft(2700); // 45 minutes
+                setTimeLeft(1800); // 30 minutes
                 setIsTimerActive(true);
                 setCurrentQuestion(0);
                 // Initialize code solutions for each problem with template
@@ -2817,7 +2817,7 @@
                     initialSolutions[problem.id] = languages[selectedLanguage].template;
                 });
                 setCodeSolutions(initialSolutions);
-                addNotification('Coding test started! 45 minutes timer.', 'success');
+                addNotification('Coding test started! 30 minutes timer.', 'success');
             };
             
             const handleAptitudeAnswer = (questionId, selectedOption) => {
@@ -3203,7 +3203,7 @@ except Exception as e:
                             codingScore: finalCodingScore,
                             problemsSolved: problemsSolved,
                             totalProblems: codingProblems.length,
-                            timeSpent: 2700 - timeLeft, // Time spent in seconds
+                            timeSpent: 1800 - timeLeft, // Time spent in seconds
                             language: selectedLanguage,
                             solutions: codeSolutions,
                             completedAt: new Date().toISOString()
@@ -3255,7 +3255,7 @@ except Exception as e:
                                 React.createElement('h4', { className: 'text-xl font-bold mb-3 text-green-800' }, 'Coding Test'),
                                 React.createElement('p', { className: 'text-gray-600 mb-4' }, '2 programming challenges'),
                                 React.createElement('div', { className: 'bg-green-50 p-3 rounded mb-4' },
-                                    React.createElement('p', { className: 'text-sm text-green-700' }, '⏱️ Duration: 45 minutes'),
+                                    React.createElement('p', { className: 'text-sm text-green-700' }, '⏱️ Duration: 30 minutes'),
                                     React.createElement('p', { className: 'text-sm text-green-700' }, '💻 Languages: JS, Python, Java, C'),
                                     React.createElement('p', { className: 'text-sm text-green-700' }, '🎯 Difficulty: Easy + Medium')
                                 ),
@@ -3572,8 +3572,8 @@ except Exception as e:
                     React.createElement('div', { className: 'flex justify-center items-center mb-4' },
                         React.createElement('div', { 
                             className: `px-4 py-2 rounded-lg font-bold ${
-                                timeLeft > 1350 ? 'bg-green-100 text-green-800' :
-                                timeLeft > 450 ? 'bg-yellow-100 text-yellow-800' :
+                                timeLeft > 900 ? 'bg-green-100 text-green-800' :
+                                timeLeft > 300 ? 'bg-yellow-100 text-yellow-800' :
                                 'bg-red-100 text-red-800'
                             }`
                         }, `Time: ${formatTime(timeLeft)}`)

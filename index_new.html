@@ -286,7 +286,7 @@
                 addNotification(`File "${file.name}" uploaded successfully!`, 'success');
             };
 
-            const analyzeResume = () => {
+            const analyzeResume = async () => {
                 if (!uploadedFile) {
                     addNotification('Please upload a file first!', 'error');
                     return;
@@ -294,30 +294,40 @@
                 
                 setAnalyzing(true);
                 addNotification('Analyzing your resume...', 'info');
-                
-                setTimeout(() => {
-                    const score = Math.floor(Math.random() * 40) + 60;
-                    const mockResult = {
-                        score: score,
-                        strengths: [
-                            'Clear contact information',
-                            'Professional formatting',
-                            'Relevant keywords found',
-                            'Good work experience structure'
-                        ],
-                        improvements: [
-                            'Add more quantifiable achievements',
-                            'Include relevant technical skills',
-                            'Optimize for specific job keywords',
-                            'Consider adding a professional summary'
-                        ],
-                        keywords: ['JavaScript', 'React', 'Node.js', 'Python', 'HTML', 'CSS'],
-                        missingKeywords: ['TypeScript', 'AWS', 'Docker', 'GraphQL']
-                    };
-                    setAnalysisResult(mockResult);
-                    setAnalyzing(false);
+                try {
+                    const resp = await fetch('/api/evaluate', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            question: 'ATS Resume Analysis',
+                            transcript: `File: ${uploadedFile.name} (type: ${uploadedFile.type})\nThe resume content is referenced. Evaluate for ATS compatibility and return JSON with: score (0-100), strengths (array), improvements (array), keywords {found:[], missing:[]}.`,
+                            rubric: 'Focus on ATS parsing, keyword coverage, measurable achievements, formatting best practices, and clarity. Be concise.'
+                        })
+                    });
+                    const data = await resp.json();
+                    if (!resp.ok || !data.ok) {
+                        throw new Error(data.error || 'Failed to analyze resume');
+                    }
+                    const evaluation = data.evaluation || {};
+                    const score = typeof evaluation.score === 'number' ? evaluation.score : 0;
+                    const strengths = Array.isArray(evaluation.strengths) ? evaluation.strengths : [];
+                    const improvements = Array.isArray(evaluation.improvements) ? evaluation.improvements : [];
+                    const keywordsFound = evaluation.keywords?.found ?? [];
+                    const keywordsMissing = evaluation.keywords?.missing ?? [];
+                    setAnalysisResult({
+                        score,
+                        strengths,
+                        improvements,
+                        keywords: keywordsFound,
+                        missingKeywords: keywordsMissing
+                    });
                     addNotification('Analysis complete!', 'success');
-                }, 3000);
+                } catch (e) {
+                    console.error('ATS analysis failed:', e);
+                    addNotification(`ATS analysis failed: ${e.message || e}`, 'error');
+                } finally {
+                    setAnalyzing(false);
+                }
             };
             
             return React.createElement('div', { className: 'max-w-4xl mx-auto' },
@@ -477,7 +487,7 @@
             const [overallScore, setOverallScore] = useState(null);
             const [interviewEligible, setInterviewEligible] = useState(false);
             const [aptitudeTimeLeft, setAptitudeTimeLeft] = useState(900); // 15 minutes for aptitude
-            const [codingTimeLeft, setCodingTimeLeft] = useState(2700); // 45 minutes for coding
+            const [codingTimeLeft, setCodingTimeLeft] = useState(1800); // 30 minutes for coding
             
             const languages = {
                 javascript: {
@@ -1110,7 +1120,7 @@
                 setTimeLeft(900);
                 setSectionTimeLeft(900);
                 setAptitudeTimeLeft(900); // Reset aptitude timer
-                setCodingTimeLeft(2700); // Reset coding timer
+                setCodingTimeLeft(1800); // Reset coding timer
                 setCurrentSection('aptitude');
                 setCurrentQuestion(0);
                 setSelectedLanguage('javascript');
@@ -1128,12 +1138,12 @@
                     React.createElement('div', { className: 'card p-8' },
                         React.createElement('div', { className: 'text-6xl mb-6' }, '💻'),
                         React.createElement('h3', { className: 'text-2xl font-semibold mb-4' }, 'Ready to Start?'),
-                        React.createElement('p', { className: 'text-gray-600 mb-6' }, 'You will have 15 minutes for aptitude questions and 45 minutes for coding challenges (60 minutes total). Make sure you have a stable internet connection.'),
+                        React.createElement('p', { className: 'text-gray-600 mb-6' }, 'You will have 15 minutes for aptitude questions and 30 minutes for coding challenges (45 minutes total). Make sure you have a stable internet connection.'),
                         React.createElement('div', { className: 'bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6' },
                             React.createElement('h4', { className: 'font-semibold text-yellow-800 mb-2' }, 'Instructions:'),
                             React.createElement('ul', { className: 'text-left text-yellow-700 space-y-1' },
                                 React.createElement('li', null, '• Complete 10 aptitude questions first (15 minutes)'),
-                                React.createElement('li', null, '• Then solve 2 coding problems (45 minutes)'),
+                                React.createElement('li', null, '• Then solve 2 coding problems (30 minutes)'),
                                 React.createElement('li', null, '• Timer resets between sections automatically'),
                                 React.createElement('li', null, '• Choose your preferred programming language for coding'),
                                 React.createElement('li', null, '• Read each problem carefully and submit before time runs out')
@@ -1190,8 +1200,8 @@
                     React.createElement('div', { className: 'flex items-center gap-4' },
                         React.createElement('div', { 
                             className: `px-3 py-1 rounded-lg font-medium ${
-                                sectionTimeLeft > (currentSection === 'aptitude' ? 300 : 1350) ? 'bg-green-100 text-green-800' :
-                                sectionTimeLeft > (currentSection === 'aptitude' ? 120 : 450) ? 'bg-yellow-100 text-yellow-800' :
+                                sectionTimeLeft > (currentSection === 'aptitude' ? 300 : 900) ? 'bg-green-100 text-green-800' :
+                                sectionTimeLeft > (currentSection === 'aptitude' ? 120 : 300) ? 'bg-yellow-100 text-yellow-800' :
                                 'bg-red-100 text-red-800'
                             }`
                         }, `${currentSection === 'aptitude' ? 'Aptitude' : 'Coding'} Time: ${formatTime(sectionTimeLeft)}`),

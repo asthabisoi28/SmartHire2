@@ -1,12 +1,13 @@
 import React, { useState, useRef } from "react";
 import { User } from "@/entities/User";
 import { Interview } from "@/entities/Interview";
-import { UploadFile, InvokeLLM } from "@/integrations/Core";
+import { UploadFile } from "@/integrations/Core";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Textarea } from "@/components/ui/textarea";
 import { 
   Upload, 
   FileText, 
@@ -21,7 +22,7 @@ import {
   Award,
   BarChart3
 } from "lucide-react";
-import { createPageUrl } from "@/utils";
+import { createPageUrl, extractResumeTests } from "@/utils";
 
 export default function ATSChecker() {
   const [file, setFile] = useState(null);
@@ -150,6 +151,15 @@ export default function ATSChecker() {
 
       // Upload file
       const uploadResult = await UploadFile(file);
+
+      // Read file as base64
+      const toBase64 = (f) => new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(f);
+      });
+      const fileDataBase64 = await toBase64(file);
       
       if (!uploadResult.success) {
         throw new Error("Failed to upload file");
@@ -162,27 +172,26 @@ export default function ATSChecker() {
       // Simulate analysis progress
       await simulateProgress(setAnalysisProgress, 3000);
 
-      // Analyze resume with AI
-      const analysisResult = await InvokeLLM(
-        `Analyze this resume for ATS (Applicant Tracking System) compatibility. 
-        Provide a comprehensive evaluation including:
-        - Overall ATS score (0-100)
-        - Strengths and weaknesses
-        - Keyword analysis
-        - Section-by-section feedback
-        - Improvement recommendations`,
-        { 
-          fileId: uploadResult.fileId,
-          fileName: uploadResult.fileName,
-          fileType: uploadResult.fileType
-        }
-      );
-
-      if (!analysisResult.success) {
-        throw new Error("Failed to analyze resume");
+      // Analyze resume with text extraction via server endpoint
+      const resp = await fetch('/api/evaluate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          question: 'ATS Resume Analysis',
+          transcript: `File: ${uploadResult.fileName} (type: ${uploadResult.fileType})\n` +
+            'The resume content is attached or referenced. Evaluate for ATS (Applicant Tracking System) compatibility and return JSON with: ' +
+            'score (0-100), strengths (array), improvements (array), keywords {found:[], missing:[]}, sections {contact, summary, experience, skills, education} each with score and feedback.',
+          rubric: 'Focus on ATS parsing, keyword coverage, measurable achievements, formatting best practices, and clarity. Be concise.'
+        })
+      });
+      const data = await resp.json();
+      if (!resp.ok || !data.ok) {
+        throw new Error(data.error || 'Failed to analyze resume');
       }
-
-      setResults(analysisResult.analysis);
+      setResults(data.evaluation);
+      // Build real tests from evaluation + optional plain text (if available later)
+      const checks = extractResumeTests({ evaluation: data.evaluation });
+      setResults(prev => ({ ...(prev || data.evaluation), extractedChecks: checks }));
       setAnalyzing(false);
 
     } catch (err) {
@@ -505,6 +514,30 @@ export default function ATSChecker() {
                 </CardContent>
               </Card>
             </div>
+
+            {/* Extracted Checks */}
+            {Array.isArray(results.extractedChecks) && results.extractedChecks.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <BarChart3 className="w-5 h-5" />
+                    Resume Checks (Extracted)
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid md:grid-cols-2 gap-3">
+                    {results.extractedChecks.map((c, idx) => (
+                      <div key={`${c.id}-${idx}`} className={`flex items-center justify-between border rounded p-2 ${c.passed ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
+                        <span className="text-sm font-medium">{c.name}</span>
+                        <Badge className={c.passed ? 'bg-green-200 text-green-800' : 'bg-red-200 text-red-800'}>
+                          {c.passed ? 'PASS' : 'FAIL'}
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Keywords Analysis */}
             {results.keywords && (
