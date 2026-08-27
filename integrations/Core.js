@@ -28,47 +28,7 @@ export const UploadFile = async (file) => {
   });
 };
 
-// Mock LLM invocation function
-export const InvokeLLM = async (prompt, context = {}) => {
-  return new Promise((resolve, reject) => {
-    try {
-      setTimeout(() => {
-        // Mock ATS analysis response
-        if (prompt.includes('ATS') || prompt.includes('resume')) {
-          const score = Math.floor(Math.random() * 40) + 60; // 60-100
-          resolve({
-            success: true,
-            analysis: {
-              score: score,
-              strengths: [
-                "Strong technical skills section",
-                "Clear work experience progression", 
-                "Relevant education background",
-                "Good use of action verbs",
-                "Professional formatting"
-              ],
-              improvements: [
-                "Add more quantifiable achievements",
-                "Include relevant keywords for the role",
-                "Optimize formatting for ATS systems",
-                "Add a professional summary",
-                "Include more industry-specific terms"
-              ],
-              keywords: {
-                found: ["JavaScript", "React", "Node.js", "Python", "HTML", "CSS"],
-                missing: ["TypeScript", "AWS", "Docker", "Kubernetes", "GraphQL", "MongoDB"]
-              },
-              sections: {
-                contact: { score: Math.floor(Math.random() * 20) + 80, feedback: "Complete and professional contact information" },
-                summary: { score: Math.floor(Math.random() * 30) + 60, feedback: "Could be more compelling and targeted" },
-                experience: { score: Math.floor(Math.random() * 25) + 75, feedback: "Good detail and career progression shown" },
-                skills: { score: Math.floor(Math.random() * 30) + 70, feedback: "Relevant skills but could expand technical depth" },
-                education: { score: Math.floor(Math.random() * 20) + 80, feedback: "Strong educational background presented well" }
-              }
-            }
-          });
-        }
-      
+
       // Mock interview question generation
       if (prompt.includes('interview') || prompt.includes('question')) {
         resolve({
