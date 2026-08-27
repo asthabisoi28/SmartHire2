@@ -1,243 +1,203 @@
-# AI Interview System
+# SmartHire
 
-A comprehensive AI-powered interview management system that streamlines the entire recruitment process from ATS resume checking to live interviews.
+SmartHire is an AI-assisted recruitment platform that brings resume screening, technical assessments, and interviews into a single workflow.
+
+The project was built to explore how AI can be used to assist recruiters during candidate screening and evaluation.
 
 ## Features
 
-### 🎯 For Candidates
-- **ATS Resume Checker**: Upload and analyze resumes for ATS compatibility
-- **Technical Tests**: Take coding challenges with real-time monitoring
-- **Live Interviews**: Participate in AI-assisted video interviews
-- **Progress Tracking**: Monitor your application status through each stage
+### For Candidates
 
-### 👥 For HR Managers
-- **Candidate Management**: View and manage all candidate applications
-- **Analytics Dashboard**: Get insights on recruitment metrics
-- **Interview Scheduling**: Schedule and manage interview sessions
-- **Comprehensive Reporting**: Generate detailed reports on candidate performance
+* **Resume Screening** — Upload a resume and check it against ATS-style criteria.
+* **Technical Assessment** — Attempt technical and coding questions.
+* **Interview** — Participate in an online interview session with browser-based monitoring.
+* **Progress Tracking** — Track progress through the recruitment stages.
 
-## System Architecture
+### For Recruiters
 
-### Frontend Structure
+* **Candidate Management** — View and manage candidates.
+* **Interview Management** — Schedule and conduct interview sessions.
+* **Analytics** — View candidate and recruitment performance.
+* **Evaluation** — Review assessment and interview results.
+
+## How It Works
+
+```text
+Candidate
+    │
+    ▼
+Resume Upload
+    │
+    ▼
+ATS Screening
+    │
+    ▼
+Technical Assessment
+    │
+    ▼
+Interview
+    │
+    ▼
+AI-assisted Evaluation
+    │
+    ▼
+Recruiter Dashboard
 ```
-AI Interview/
-├── Components/
-│   └── interview/
-│       └── ScheduledInterview.jsx
-├── Entities/
-│   ├── User.js
-│   ├── Interview.js
-│   ├── TechnicalQuestion.js
-│   └── index.js
-├── Pages/
-│   ├── Analytics.jsx
-│   ├── ATSChecker.jsx
-│   ├── CandidateDashboard.jsx
-│   ├── CandidateManagement.jsx
-│   ├── Home.jsx
-│   ├── HRdashboard.jsx
-│   ├── InterviewRoom.jsx
-│   ├── LiveInterview.jsx
-│   └── TechnicalTest.jsx
-├── utils/
-│   └── index.js
+
+## Architecture
+
+```text
+                         SmartHire
+                            │
+                 ┌──────────┴──────────┐
+                 │                     │
+            Candidate                Recruiter
+                 │                     │
+        ┌────────┼────────┐       ┌────┼─────┐
+        │        │        │       │    │     │
+      Resume   Test   Interview  Candidates Analytics
+        │        │        │       │    │
+        └────────┼────────┘       └────┼─────┘
+                 │                     │
+                 └──────────┬──────────┘
+                            │
+                     Application Logic
+                            │
+                  ┌─────────┴─────────┐
+                  │                   │
+             AI Services        Integrations
+                  │
+                  ▼
+             Evaluation
+```
+
+### Main Project Structure
+
+```text
+SmartHire2/
+│
+├── Components/          # Reusable UI components
+├── Entities/            # Application entities/models
+├── Pages/               # Main application screens
+├── config/              # Application configuration
+├── integrations/        # External service integrations
+├── src/                 # React entry point and styles
+├── utils/               # Shared utility functions
+│
+├── index.html
 ├── Layout.jsx
 ├── package.json
+├── simple-server.js
+├── tailwind.config.js
+├── vite.config.js
 └── README.md
 ```
+
+## Tech Stack
+
+**Frontend**
+
+* React
+* Vite
+* Tailwind CSS
+* React Router
+
+**AI / ML**
+
+* OpenAI API
+* TensorFlow.js
+
+**UI & Visualization**
+
+* Radix UI
+* Lucide React
+* Recharts
+* Monaco Editor
+
+**Other**
+
+* JavaScript
+* Node.js
+* npm
 
 ## Getting Started
 
 ### Prerequisites
-- Node.js 18+ 
-- npm or yarn
-- Modern web browser with camera/microphone access
+
+* Node.js 18+
+* npm
+* Modern web browser
+* Camera and microphone access for interview features
 
 ### Installation
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/your-org/ai-interview-system.git
-   cd ai-interview-system
-   ```
+Clone the repository:
 
-2. **Install dependencies**
-   ```bash
-   npm install
-   # or
-   yarn install
-   ```
-
-3. **Set up environment variables**
-   ```bash
-   cp .env.example .env
-   ```
-   
-   Configure the following variables:
-   ```env
-   VITE_API_BASE_URL=http://localhost:3001/api
-   VITE_SOCKET_URL=http://localhost:3001
-   VITE_APP_NAME=AI Interview System
-   ```
-
-4. **Start the development server**
-   ```bash
-   npm run dev
-   # or
-   yarn dev
-   ```
-
-5. **Open your browser**
-   Navigate to `http://localhost:5173`
-
-## Core Components
-
-### Entity Classes
-
-#### User Entity (`Entities/User.js`)
-Manages user authentication and profile data with methods for:
-- Login/logout functionality
-- Profile management
-- Password changes
-- Avatar uploads
-
-#### Interview Entity (`Entities/Interview.js`)
-Handles interview lifecycle management:
-- Interview creation and scheduling
-- Status and stage tracking
-- Score management
-- Progress monitoring
-
-#### TechnicalQuestion Entity (`Entities/TechnicalQuestion.js`)
-Manages technical assessment questions:
-- Question creation and categorization
-- Test case management
-- Answer submission and evaluation
-- Difficulty and time limit settings
-
-### Page Components
-
-#### Candidate Pages
-- **CandidateDashboard**: Overview of application status and next steps
-- **ATSChecker**: Resume upload and ATS compatibility analysis
-- **TechnicalTest**: Coding challenges with Monaco editor
-- **InterviewRoom**: Video interview interface
-
-#### HR Pages
-- **HRDashboard**: HR overview with key metrics and recent activities
-- **CandidateManagement**: Candidate list with filtering and management tools
-- **Analytics**: Detailed recruitment analytics and reporting
-- **LiveInterview**: Real-time interview monitoring and evaluation
-
-### Utility Functions (`utils/index.js`)
-Common helper functions including:
-- URL routing and navigation
-- Date and time formatting
-- Validation utilities
-- Score calculation and formatting
-- File handling utilities
-
-## Interview Process Flow
-
-1. **ATS Stage**: Candidate uploads resume for automated screening
-2. **Technical Stage**: Candidate completes coding challenges
-3. **Interview Stage**: Live video interview with HR
-4. **Completion**: Final evaluation and decision
-
-Each stage has configurable passing thresholds and automatic progression.
-
-## API Integration
-
-The system expects a REST API with the following endpoints:
-
-### Authentication
-- `POST /api/auth/login` - User login
-- `POST /api/auth/register` - User registration
-- `POST /api/auth/logout` - User logout
-- `GET /api/auth/me` - Get current user
-
-### Interviews
-- `GET /api/interviews` - List interviews
-- `POST /api/interviews` - Create interview
-- `GET /api/interviews/:id` - Get interview details
-- `PUT /api/interviews/:id` - Update interview
-- `DELETE /api/interviews/:id` - Delete interview
-
-### Technical Questions
-- `GET /api/technical-questions` - List questions
-- `POST /api/technical-questions` - Create question
-- `GET /api/technical-questions/:id` - Get question details
-- `POST /api/technical-questions/:id/submit` - Submit answer
-
-## Development
-
-### Code Style
-- ESLint configuration for consistent code style
-- Prettier for code formatting
-- React best practices and hooks
-
-### Testing
 ```bash
-# Run tests
-npm run test
-
-# Run tests with UI
-npm run test:ui
-
-# Run tests with coverage
-npm run test:coverage
+git clone https://github.com/asthabisoi28/SmartHire2.git
+cd SmartHire2
 ```
 
-### Building for Production
+Install dependencies:
+
 ```bash
-npm run build
+npm install
 ```
 
-## Technologies Used
+Create a `.env` file in the project root and add the required API configuration:
 
-- **Frontend**: React 18, React Router, Tailwind CSS
-- **UI Components**: Radix UI, Lucide React icons
-- **Code Editor**: Monaco Editor (VS Code editor)
-- **Charts**: Recharts for analytics
-- **Real-time**: Socket.IO for live features
-- **Video**: WebRTC for video interviews
-- **Build Tool**: Vite
-- **Testing**: Vitest, Testing Library
+```env
+OPENAI_API_KEY=your_api_key_here
+```
 
-## Configuration
+Start the development server:
 
-### Tailwind CSS
-The system uses Tailwind CSS for styling with custom components and utilities.
+```bash
+npm run dev
+```
 
-### Environment Variables
-- `VITE_API_BASE_URL`: Backend API URL
-- `VITE_SOCKET_URL`: WebSocket server URL
-- `VITE_APP_NAME`: Application name
+Then open the local URL displayed in the terminal.
 
-## Contributing
+> Keep `.env` out of version control. Never commit API keys or other credentials.
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+## Recruitment Workflow
 
-## License
+SmartHire follows a multi-stage recruitment workflow:
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+**1. Resume Screening**
 
-## Support
+The candidate uploads a resume which is analyzed against ATS-style criteria.
 
-For support and questions:
-- Create an issue on GitHub
-- Contact the development team
-- Check the documentation wiki
+**2. Technical Assessment**
 
-## Roadmap
+Candidates complete technical questions and coding tasks.
 
-- [ ] AI-powered question generation
-- [ ] Advanced analytics and ML insights
-- [ ] Mobile application
-- [ ] Integration with popular ATS systems
-- [ ] Multi-language support
-- [ ] Advanced proctoring features
+**3. Interview**
+
+Candidates participate in an online interview session with browser-based monitoring features.
+
+**4. Evaluation**
+
+Assessment and interview information is used to help recruiters evaluate candidates.
+
+## Current Scope
+
+SmartHire is currently a prototype focused on demonstrating the end-to-end recruitment workflow and AI-assisted evaluation.
+
+The project can be extended with persistent database storage, stronger authentication, scalable backend services, and production deployment.
+
+## Future Improvements
+
+* Persistent database integration
+* Role-based authentication
+* Improved candidate ranking
+* More detailed interview analytics
+* Real-time interview communication
+* Cloud deployment
+* Advanced AI-assisted question generation
+
+## Author
+
+**Astha Bisoi**
+
+[GitHub](https://github.com/asthabisoi28) · [LinkedIn](https://www.linkedin.com/in/astha-bisoi/)
